@@ -1,18 +1,17 @@
 # Paris JUG Twitter raffle website
 
-## Setup
+## Package
 
-Add twitter credential in `src/main/resources/twitter4j.properties`:
-```properties
-oauth.consumerKey=
-oauth.consumerSecret=
-oauth.accessToken=
-oauth.accessTokenSecret=
+Compile project with Maven:
+
+```bash
+mvn package
 ```
 
 ## Run
 
-```bash
-./mvn compile quarkus:dev
-```
+Run providing Twitter client credentials:
 
+```bash
+java -Dtwitter4j.oauth.consumerKey=<consumerKey> -Dtwitter4j.oauth.consumerSecret=<consumerSecret> -Dtwitter4j.oauth.accessToken=<accessToken> -Dtwitter4j.oauth.accessTokenSecret=<accessTokenSecret> -jar target/twitter-raffle-1.0.0-SNAPSHOT-runner.jar
+```
