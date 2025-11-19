@@ -24,9 +24,23 @@ public class Winner {
         }
         
         // Extract first image if available
+        // Try record.embed first (this is where images should be)
         if (post.record != null && post.record.embed != null && 
             post.record.embed.images != null && post.record.embed.images.length > 0) {
-            winner.imageUrl = post.record.embed.images[0].fullsize;
+            String imageUrl = post.record.embed.images[0].fullsize;
+            // If the URL is not complete, try thumb as fallback
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                imageUrl = post.record.embed.images[0].thumb;
+            }
+            winner.imageUrl = imageUrl;
+        }
+        // Fallback to top-level embed if record.embed doesn't have images
+        else if (post.embed != null && post.embed.images != null && post.embed.images.length > 0) {
+            String imageUrl = post.embed.images[0].fullsize;
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                imageUrl = post.embed.images[0].thumb;
+            }
+            winner.imageUrl = imageUrl;
         }
         
         return winner;

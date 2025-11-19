@@ -24,6 +24,10 @@ function showNextWinner() {
     const winner = globalWinners[globalCurrentWinner];
     const postUrl = winner.postUrl;
     
+    // Debug logging
+    console.log('Winner data:', winner);
+    console.log('Image URL:', winner.imageUrl);
+    
     // Ensure winner panel is shown
     document.getElementById('home').classList.add('hidden');
     document.getElementById('winner').classList.remove('hidden');
@@ -42,7 +46,10 @@ function showNextWinner() {
     
     // Add image if available
     if (winner.imageUrl) {
-        postHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;">';
+        console.log('Adding image with URL:', winner.imageUrl);
+        postHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;" onerror="console.error(\'Image failed to load:\', this.src)">';
+    } else {
+        console.log('No image URL available');
     }
     
     // Add link to view on Bluesky
