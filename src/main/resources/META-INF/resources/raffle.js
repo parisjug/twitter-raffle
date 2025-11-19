@@ -23,27 +23,39 @@ function showNextWinner() {
     // Get next winner
     const winner = globalWinners[globalCurrentWinner];
     const postUrl = winner.postUrl;
-    // Request embedded post HTML code
-    const url = "/embed?url=" + encodeURI(postUrl);
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = 'json';
-    xhr.onload = function () {
-        var status = xhr.status;
-        if (status === 200) {
-            console.log(xhr.response);
-            // Ensure winner panel it shown
-            document.getElementById('home').classList.add('hidden');
-            document.getElementById('winner').classList.remove('hidden');
-            // Update winner panel
-            document.getElementById('winner-name').innerHTML = winner.name + ' (<cite>@' + winner.screenName + '</cite>)';
-            const postElement = document.getElementById('post');
-            postElement.innerHTML = xhr.response.html + '<p><a href="' + postUrl + '" target="_blank">View on Bluesky</a></p>';
-        } else {
-            console.log('Status: ' + status);
-        }
-    };
-    xhr.send();
+    
+    // Ensure winner panel is shown
+    document.getElementById('home').classList.add('hidden');
+    document.getElementById('winner').classList.remove('hidden');
+    
+    // Update winner panel
+    document.getElementById('winner-name').innerHTML = winner.name + ' (<cite>@' + winner.screenName + '</cite>)';
+    
+    // Build the post content HTML
+    const postElement = document.getElementById('post');
+    let postHtml = '<div class="bluesky-post-embed" style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin: 20px 0; background: #f9f9f9;">';
+    
+    // Add post text if available
+    if (winner.postText) {
+        postHtml += '<p style="font-size: 16px; line-height: 1.5; margin-bottom: 10px;">' + escapeHtml(winner.postText) + '</p>';
+    }
+    
+    // Add image if available
+    if (winner.imageUrl) {
+        postHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;">';
+    }
+    
+    // Add link to view on Bluesky
+    postHtml += '<p style="margin-top: 10px;"><a href="' + escapeHtml(postUrl) + '" target="_blank" style="color: #0085ff; text-decoration: none;">View on Bluesky →</a></p>';
+    postHtml += '</div>';
+    
+    postElement.innerHTML = postHtml;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function showNoWinnerFound() {
