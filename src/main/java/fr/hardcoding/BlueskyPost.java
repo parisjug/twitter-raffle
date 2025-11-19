@@ -11,10 +11,10 @@ public class BlueskyPost {
     public Author author;
     public Record record;
     public Embed embed;
-    public long indexedAt;
-    public long likeCount;
-    public long repostCount;
-    public long replyCount;
+    public String indexedAt;
+    public Integer likeCount;
+    public Integer repostCount;
+    public Integer replyCount;
 
     @RegisterForReflection
     @JsonIgnoreProperties(ignoreUnknown = true)
