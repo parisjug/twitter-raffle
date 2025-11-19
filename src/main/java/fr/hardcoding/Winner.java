@@ -40,22 +40,45 @@ public class Winner {
         // Try record.embed first (this is where images should be)
         if (post.record != null && post.record.embed != null && 
             post.record.embed.images != null && post.record.embed.images.length > 0) {
-            String imageUrl = post.record.embed.images[0].fullsize;
+            BlueskyPost.Image firstImage = post.record.embed.images[0];
+            LOGGER.info("Image object fields - fullsize: " + firstImage.fullsize + ", thumb: " + firstImage.thumb + 
+                       ", alt: " + firstImage.alt + ", image: " + (firstImage.image != null ? "present" : "null"));
+            
+            String imageUrl = firstImage.fullsize;
             LOGGER.info("Found image in record.embed.images[0].fullsize: " + imageUrl);
             // If the URL is not complete, try thumb as fallback
             if (imageUrl == null || imageUrl.isEmpty()) {
-                imageUrl = post.record.embed.images[0].thumb;
+                imageUrl = firstImage.thumb;
                 LOGGER.info("Fallback to record.embed.images[0].thumb: " + imageUrl);
+            }
+            // If still no URL, try to construct from blob reference
+            if ((imageUrl == null || imageUrl.isEmpty()) && firstImage.image != null && firstImage.image.ref != null) {
+                // Construct URL from blob: https://bsky.social/xrpc/com.atproto.sync.getBlob?did={did}&cid={cid}
+                String did = post.author.did;
+                String cid = firstImage.image.ref.link;
+                imageUrl = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=" + did + "&cid=" + cid;
+                LOGGER.info("Constructed image URL from blob reference: " + imageUrl);
             }
             winner.imageUrl = imageUrl;
         }
         // Fallback to top-level embed if record.embed doesn't have images
         else if (post.embed != null && post.embed.images != null && post.embed.images.length > 0) {
-            String imageUrl = post.embed.images[0].fullsize;
+            BlueskyPost.Image firstImage = post.embed.images[0];
+            LOGGER.info("Top-level image object fields - fullsize: " + firstImage.fullsize + ", thumb: " + firstImage.thumb + 
+                       ", alt: " + firstImage.alt + ", image: " + (firstImage.image != null ? "present" : "null"));
+            
+            String imageUrl = firstImage.fullsize;
             LOGGER.info("Found image in top-level embed.images[0].fullsize: " + imageUrl);
             if (imageUrl == null || imageUrl.isEmpty()) {
-                imageUrl = post.embed.images[0].thumb;
+                imageUrl = firstImage.thumb;
                 LOGGER.info("Fallback to top-level embed.images[0].thumb: " + imageUrl);
+            }
+            // If still no URL, try to construct from blob reference
+            if ((imageUrl == null || imageUrl.isEmpty()) && firstImage.image != null && firstImage.image.ref != null) {
+                String did = post.author.did;
+                String cid = firstImage.image.ref.link;
+                imageUrl = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=" + did + "&cid=" + cid;
+                LOGGER.info("Constructed image URL from blob reference: " + imageUrl);
             }
             winner.imageUrl = imageUrl;
         } else {

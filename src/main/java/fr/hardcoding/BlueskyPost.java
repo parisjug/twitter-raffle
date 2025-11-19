@@ -46,5 +46,22 @@ public class BlueskyPost {
         public String thumb;
         public String fullsize;
         public String alt;
+        // AT Protocol also uses these fields
+        public ImageBlob image;
+    }
+    
+    @RegisterForReflection
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ImageBlob {
+        public String type;
+        public BlobRef ref;
+        public String mimeType;
+        public Integer size;
+    }
+    
+    @RegisterForReflection
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class BlobRef {
+        public String link;  // This is the CID
     }
 }
