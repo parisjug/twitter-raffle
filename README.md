@@ -30,8 +30,8 @@ mvn package -Pnative
 Run providing Bluesky client credentials using CLI arguments:
 
 ```shell
-# Run classic mode
-java -Dbluesky.identifier=<your-handle-or-email> -Dbluesky.password=<your-app-password> -jar target/bluesky-raffle-1.0.0-SNAPSHOT-runner.jar
+# Run classic mode (Quarkus 3.x uses quarkus-run.jar)
+java -Dbluesky.identifier=<your-handle-or-email> -Dbluesky.password=<your-app-password> -jar target/quarkus-app/quarkus-run.jar
 
 # Run native mode
 target/bluesky-raffle-1.0.0-SNAPSHOT-runner -Dbluesky.identifier=<your-handle-or-email> -Dbluesky.password=<your-app-password>
@@ -44,7 +44,7 @@ export bluesky.identifier=<your-handle-or-email>
 export bluesky.password=<your-app-password>
 
 # Run classic mode
-java -jar target/bluesky-raffle-1.0.0-SNAPSHOT-runner.jar
+java -jar target/quarkus-app/quarkus-run.jar
 
 # Run native mode
 target/bluesky-raffle-1.0.0-SNAPSHOT-runner
