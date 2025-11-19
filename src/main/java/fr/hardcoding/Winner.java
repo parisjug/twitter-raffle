@@ -1,23 +1,24 @@
 package fr.hardcoding;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import twitter4j.Status;
 
 @RegisterForReflection
 public class Winner {
     public String name;
     public String screenName;
-    public String tweetUrl;
+    public String postUrl;
 
-    public static Winner fromStatus(Status status) {
+    public static Winner fromBlueskyPost(BlueskyPost post) {
         Winner winner = new Winner();
-        winner.name = status.getUser().getName();
-        winner.screenName = status.getUser().getScreenName();
-        winner.tweetUrl = "https://twitter.com/"+winner.screenName+"/status/"+status.getId();
+        winner.name = post.author.displayName != null ? post.author.displayName : post.author.handle;
+        winner.screenName = post.author.handle;
+        // Extract post ID from URI: at://did:plc:xxx/app.bsky.feed.post/yyy
+        String postId = post.uri.substring(post.uri.lastIndexOf('/') + 1);
+        winner.postUrl = "https://bsky.app/profile/" + winner.screenName + "/post/" + postId;
         return winner;
     }
 
     public String toString() {
-        return this.name+" (@"+this.screenName+"): "+this.tweetUrl;
+        return this.name + " (@" + this.screenName + "): " + this.postUrl;
     }
 }

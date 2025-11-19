@@ -22,9 +22,9 @@ function showNextWinner() {
     }
     // Get next winner
     const winner = globalWinners[globalCurrentWinner];
-    const tweetUrl = winner.tweetUrl;
-    // Request embedded tweet HTML code
-    const url = "/publish.twitter.com?url=" + encodeURI(tweetUrl);
+    const postUrl = winner.postUrl;
+    // Request embedded post HTML code
+    const url = "/embed?url=" + encodeURI(postUrl);
     const xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.responseType = 'json';
@@ -36,11 +36,9 @@ function showNextWinner() {
             document.getElementById('home').classList.add('hidden');
             document.getElementById('winner').classList.remove('hidden');
             // Update winner panel
-            document.getElementById('winner-name').innerHTML = winner.name + '(<cite>@' + winner.screenName + '</cite>)';
-            const tweetElement = document.getElementById('tweet');
-            tweetElement.innerHTML = xhr.response.html;
-            // Load widget
-            twttr.widgets.load(tweetElement);
+            document.getElementById('winner-name').innerHTML = winner.name + ' (<cite>@' + winner.screenName + '</cite>)';
+            const postElement = document.getElementById('post');
+            postElement.innerHTML = xhr.response.html + '<p><a href="' + postUrl + '" target="_blank">View on Bluesky</a></p>';
         } else {
             console.log('Status: ' + status);
         }
