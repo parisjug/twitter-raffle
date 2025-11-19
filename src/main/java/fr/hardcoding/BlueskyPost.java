@@ -53,7 +53,7 @@ public class BlueskyPost {
     @RegisterForReflection
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ImageBlob {
-        public String type;
+        public String $type;  // AT Protocol uses $type
         public BlobRef ref;
         public String mimeType;
         public Integer size;
@@ -62,6 +62,8 @@ public class BlueskyPost {
     @RegisterForReflection
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BlobRef {
-        public String link;  // This is the CID
+        public String $link;  // AT Protocol might use $link
+        public String link;   // Or just link
+        public String cid;    // Or cid directly
     }
 }

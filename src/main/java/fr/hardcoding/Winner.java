@@ -52,12 +52,28 @@ public class Winner {
                 LOGGER.info("Fallback to record.embed.images[0].thumb: " + imageUrl);
             }
             // If still no URL, try to construct from blob reference
-            if ((imageUrl == null || imageUrl.isEmpty()) && firstImage.image != null && firstImage.image.ref != null) {
-                // Construct URL from blob: https://bsky.social/xrpc/com.atproto.sync.getBlob?did={did}&cid={cid}
-                String did = post.author.did;
-                String cid = firstImage.image.ref.link;
-                imageUrl = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=" + did + "&cid=" + cid;
-                LOGGER.info("Constructed image URL from blob reference: " + imageUrl);
+            if ((imageUrl == null || imageUrl.isEmpty()) && firstImage.image != null) {
+                LOGGER.info("Image blob present - type: " + firstImage.image.$type + ", mimeType: " + firstImage.image.mimeType + 
+                           ", size: " + firstImage.image.size + ", ref: " + (firstImage.image.ref != null ? "present" : "null"));
+                
+                if (firstImage.image.ref != null) {
+                    LOGGER.info("BlobRef fields - $link: " + firstImage.image.ref.$link + ", link: " + firstImage.image.ref.link + 
+                               ", cid: " + firstImage.image.ref.cid);
+                    
+                    // Construct URL from blob: https://bsky.social/xrpc/com.atproto.sync.getBlob?did={did}&cid={cid}
+                    String did = post.author.did;
+                    String cid = firstImage.image.ref.$link != null ? firstImage.image.ref.$link : 
+                                (firstImage.image.ref.link != null ? firstImage.image.ref.link : firstImage.image.ref.cid);
+                    
+                    if (cid != null && !cid.isEmpty()) {
+                        imageUrl = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=" + did + "&cid=" + cid;
+                        LOGGER.info("Constructed image URL from blob reference: " + imageUrl);
+                    } else {
+                        LOGGER.warning("All CID fields are null in blob reference");
+                    }
+                } else {
+                    LOGGER.warning("Image blob ref is null");
+                }
             }
             winner.imageUrl = imageUrl;
         }
@@ -74,11 +90,27 @@ public class Winner {
                 LOGGER.info("Fallback to top-level embed.images[0].thumb: " + imageUrl);
             }
             // If still no URL, try to construct from blob reference
-            if ((imageUrl == null || imageUrl.isEmpty()) && firstImage.image != null && firstImage.image.ref != null) {
-                String did = post.author.did;
-                String cid = firstImage.image.ref.link;
-                imageUrl = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=" + did + "&cid=" + cid;
-                LOGGER.info("Constructed image URL from blob reference: " + imageUrl);
+            if ((imageUrl == null || imageUrl.isEmpty()) && firstImage.image != null) {
+                LOGGER.info("Top-level image blob present - type: " + firstImage.image.$type + ", mimeType: " + firstImage.image.mimeType + 
+                           ", size: " + firstImage.image.size + ", ref: " + (firstImage.image.ref != null ? "present" : "null"));
+                
+                if (firstImage.image.ref != null) {
+                    LOGGER.info("Top-level BlobRef fields - $link: " + firstImage.image.ref.$link + ", link: " + firstImage.image.ref.link + 
+                               ", cid: " + firstImage.image.ref.cid);
+                    
+                    String did = post.author.did;
+                    String cid = firstImage.image.ref.$link != null ? firstImage.image.ref.$link : 
+                                (firstImage.image.ref.link != null ? firstImage.image.ref.link : firstImage.image.ref.cid);
+                    
+                    if (cid != null && !cid.isEmpty()) {
+                        imageUrl = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=" + did + "&cid=" + cid;
+                        LOGGER.info("Constructed image URL from blob reference: " + imageUrl);
+                    } else {
+                        LOGGER.warning("All CID fields are null in top-level blob reference");
+                    }
+                } else {
+                    LOGGER.warning("Top-level image blob ref is null");
+                }
             }
             winner.imageUrl = imageUrl;
         } else {
