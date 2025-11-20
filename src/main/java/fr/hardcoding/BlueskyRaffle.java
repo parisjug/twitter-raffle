@@ -33,17 +33,33 @@ public class BlueskyRaffle {
     @ConfigProperty(name = "bluesky.password")
     Optional<String> password;
 
+    @ConfigProperty(name = "bluesky.mock.enabled", defaultValue = "false")
+    boolean mockEnabled;
+
     @Inject
     @RestClient
     BlueskyClient blueskyClient;
 
+    @Inject
+    MockBlueskyClient mockBlueskyClient;
+
+    private BlueskyClient getClient() {
+        return mockEnabled ? mockBlueskyClient : blueskyClient;
+    }
+
     private String getAccessToken() {
+        if (mockEnabled) {
+            // In mock mode, return a placeholder token
+            LOGGER.info("Using mock mode - no authentication required");
+            return "Bearer mock-token";
+        }
+        
         if (accessToken == null) {
             if (identifier.isPresent() && password.isPresent()) {
                 try {
                     BlueskyClient.SessionRequest request = new BlueskyClient.SessionRequest(
                             identifier.get(), password.get());
-                    BlueskyClient.SessionResponse session = blueskyClient.createSession(request);
+                    BlueskyClient.SessionResponse session = getClient().createSession(request);
                     accessToken = "Bearer " + session.accessJwt;
                     LOGGER.info("Successfully authenticated with Bluesky as " + session.handle);
                 } catch (Exception e) {
@@ -155,7 +171,7 @@ public class BlueskyRaffle {
 
         try {
             do {
-                BlueskyClient.SearchResponse result = blueskyClient.searchPosts(
+                BlueskyClient.SearchResponse result = getClient().searchPosts(
                         getAccessToken(), query, SEARCH_LIMIT, cursor);
                 
                 LOGGER.info(String.format("Fetched %d posts, total users so far: %d", 

@@ -27,6 +27,22 @@ mvn package -Pnative
 
 ## Run
 
+### Running with Mock Data (No Credentials Required)
+
+For UI testing and development, you can run the server with mock data instead of requiring real Bluesky credentials:
+
+```shell
+# Run classic mode with mock data
+java -Dbluesky.mock.enabled=true -jar target/quarkus-app/quarkus-run.jar
+
+# Run native mode with mock data
+target/bluesky-raffle-1.0.0-SNAPSHOT-runner -Dbluesky.mock.enabled=true
+```
+
+This mode uses pre-recorded API responses from the test mock files, allowing Playwright and other UI testing tools to work without needing actual Bluesky credentials. The mock data provides stable, predictable results for consistent testing.
+
+### Running with Real Bluesky API
+
 Run providing Bluesky client credentials using CLI arguments:
 
 ```shell
@@ -51,6 +67,18 @@ target/bluesky-raffle-1.0.0-SNAPSHOT-runner
 ```
 
 **Note:** You need to generate an app password from your Bluesky account settings to use with this application.
+
+### Development Mode
+
+For rapid development with automatic reloading, use Quarkus dev mode:
+
+```shell
+# With mock data (no credentials needed)
+mvn quarkus:dev -Dbluesky.mock.enabled=true
+
+# With real Bluesky API
+mvn quarkus:dev -Dbluesky.identifier=<your-handle-or-email> -Dbluesky.password=<your-app-password>
+```
 
 ## Testing
 
