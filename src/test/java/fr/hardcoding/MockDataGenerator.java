@@ -123,7 +123,7 @@ public class MockDataGenerator {
         
         HttpClient client = HttpClient.newHttpClient();
         // Use a well-known Bluesky post for consistent oEmbed response
-        String testPostUrl = "https://bsky.app/profile/bsky.app/post/3k7ixbxwzwh2w";
+        String testPostUrl = "https://bsky.app/profile/sunix.org/post/3m5ypww5hvs2j";
         String url = "https://embed.bsky.app/oembed?url=" + 
                      java.net.URLEncoder.encode(testPostUrl, "UTF-8");
         
