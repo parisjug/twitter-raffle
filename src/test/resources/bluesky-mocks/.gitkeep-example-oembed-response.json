@@ -1,0 +1,7 @@
+{
+  "type": "rich",
+  "version": "1.0",
+  "author_name": "Example User",
+  "author_url": "https://bsky.app/profile/example.bsky.social",
+  "html": "<blockquote>Example post content</blockquote>"
+}
