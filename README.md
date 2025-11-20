@@ -73,10 +73,20 @@ The project uses WireMock to mock Bluesky API and oEmbed API responses in tests.
    - `search-response-no-images.json` - Search results without images
    - `oembed-response.json` - oEmbed API response
 
-4. **Run the tests:**
+4. **Sensitive data is automatically sanitized:**
+   - Authentication tokens (`accessJwt`, `refreshJwt`) are replaced with placeholders
+   - User emails are replaced with `test@example.com`
+   - User handles are anonymized (e.g., `testuser123.bsky.social`)
+   - Personal mentions (@username) are replaced with generic names
+   - Avatar URLs are replaced with placeholders
+   - DIDs are preserved (needed for blob URL construction in tests)
+
+5. **Run the tests:**
    ```shell
    mvn test
    ```
+
+**Note:** After sanitization, mock files are safe to commit to git without exposing personal credentials or information.
 
 ### What Gets Mocked
 

@@ -2,7 +2,15 @@
 
 This directory contains mock API responses for testing.
 
-**These files are NOT committed to git** - they contain real API responses from your account.
+## Data Sanitization
+
+**Mock files are safe to commit to git** - the generator automatically sanitizes sensitive data:
+- Authentication tokens (accessJwt, refreshJwt) → placeholders
+- User emails → `test@example.com`
+- User handles → anonymized (e.g., `testuser123.bsky.social`)
+- Personal mentions (@username) → `@testuser`
+- Avatar URLs → placeholder URLs
+- DIDs are preserved (needed for blob URL construction in tests)
 
 ## Generate Mock Data
 
@@ -17,11 +25,12 @@ mvn test -Dtest=MockDataGenerator \
 ## Expected Files
 
 After running the generator, you should have:
-- `create-session-response.json`
-- `search-response-with-images.json`
-- `search-response-no-images.json`
-- `oembed-response.json`
+- `create-session-response.json` - Sanitized authentication response
+- `search-response-with-images.json` - Sanitized search results with images
+- `search-response-no-images.json` - Sanitized search results without images
+- `oembed-response.json` - Sanitized oEmbed response
 
 ## Example Files
 
 The `.gitkeep-example-*.json` files show the structure but contain placeholder data.
+They help demonstrate the expected format even before you generate real mocks.
