@@ -1,0 +1,12 @@
+{
+  "type" : "rich",
+  "version" : "1.0",
+  "author_name" : "Test User",
+  "author_url" : "https://bsky.app/profile/testuser.bsky.social",
+  "provider_name" : "Bluesky Social",
+  "provider_url" : "https://bsky.app",
+  "cache_age" : 86400,
+  "width" : 600,
+  "height" : null,
+  "html" : "<blockquote class=\"bluesky-embed\" data-bluesky-uri=\"at://did:plc:cmog25mbk7mcnsk2tfbcynsy/app.bsky.feed.post/3m5ypww5hvs2j\" data-bluesky-cid=\"bafyreign2nbjbxrzg54o7eqo6y75t2dhkfdwrx4f7ymzt4qnlabm5yq7pm\"><p lang=\"fr\">test @testuser bsk raffle #parisjug</p>&mdash; <a href=\"https://bsky.app/profile/testuser.bsky.social:plc:cmog25mbk7mcnsk2tfbcynsy?ref_src=embed\">Sun S. D. Tan (@testuser)</a> <a href=\"https://bsky.app/profile/testuser.bsky.social:plc:cmog25mbk7mcnsk2tfbcynsy/post/3m5ypww5hvs2j?ref_src=embed\">2025-11-19T16:57:29.050Z</a></blockquote><script async src=\"https://embed.bsky.app/static/embed.js\" charset=\"utf-8\"></script>"
+}
