@@ -51,3 +51,49 @@ target/bluesky-raffle-1.0.0-SNAPSHOT-runner
 ```
 
 **Note:** You need to generate an app password from your Bluesky account settings to use with this application.
+
+## Testing
+
+### Generating Mock Data for Tests
+
+The project uses WireMock to mock Bluesky API and oEmbed API responses in tests. To generate fresh mock data:
+
+1. **Set your Bluesky credentials** (using environment variables or system properties)
+
+2. **Run the mock data generator:**
+   ```shell
+   mvn test -Dtest=MockDataGenerator \
+     -Dbluesky.identifier=<your-handle-or-email> \
+     -Dbluesky.password=<your-app-password>
+   ```
+
+3. **Mock files will be generated in:** `src/test/resources/bluesky-mocks/`
+   - `create-session-response.json` - Bluesky authentication response
+   - `search-response-with-images.json` - Search results with image posts
+   - `search-response-no-images.json` - Search results without images
+   - `oembed-response.json` - oEmbed API response
+
+4. **Run the tests:**
+   ```shell
+   mvn test
+   ```
+
+### What Gets Mocked
+
+The test infrastructure mocks:
+- **Bluesky API**: 
+  - `POST /xrpc/com.atproto.server.createSession` - Authentication
+  - `GET /xrpc/app.bsky.feed.searchPosts` - Post search
+- **oEmbed API**:
+  - `GET https://embed.bsky.app/oembed` - Post embedding
+
+### Updating Mock Data
+
+To update mock data with current API responses:
+
+1. Delete existing mock files from `src/test/resources/bluesky-mocks/`
+2. Re-run the mock generator as shown above
+3. Commit the updated mock files if API response structure has changed
+
+This ensures tests remain stable while allowing periodic updates to reflect API changes.
+

@@ -1,0 +1,9 @@
+{
+  "accessJwt": "mock-access-token",
+  "refreshJwt": "mock-refresh-token",
+  "handle": "test.bsky.social",
+  "did": "did:plc:mock123456789",
+  "didDoc": {
+    "id": "did:plc:mock123456789"
+  }
+}
