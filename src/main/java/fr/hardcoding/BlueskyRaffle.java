@@ -112,6 +112,12 @@ public class BlueskyRaffle {
             post.author_url = oembedResponse.author_url;
             post.html = oembedResponse.html;
             
+            // Ensure we have HTML content
+            if (post.html == null || post.html.isEmpty()) {
+                LOGGER.warning("oEmbed response missing HTML for URL: " + url);
+                throw new RuntimeException("Invalid oEmbed response");
+            }
+            
             LOGGER.info("Successfully fetched oEmbed for URL: " + url);
             return post;
         } catch (Exception e) {

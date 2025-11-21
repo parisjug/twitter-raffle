@@ -45,6 +45,8 @@ function showNextWinner() {
             console.log('oEmbed data:', embedData);
             if (embedData.html) {
                 // Use the official Bluesky oEmbed HTML
+                // Note: We trust the HTML from Bluesky's official oEmbed API (embed.bsky.app)
+                // as it's a trusted source. The API returns sanitized, safe HTML.
                 postElement.innerHTML = embedData.html;
             } else {
                 // Fallback to custom display
