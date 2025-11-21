@@ -35,8 +35,30 @@ function showNextWinner() {
     // Update winner panel
     document.getElementById('winner-name').innerHTML = winner.name + ' (<cite>@' + winner.screenName + '</cite>)';
     
-    // Build the post content HTML
+    // Try to fetch and use Bluesky's official oEmbed
     const postElement = document.getElementById('post');
+    postElement.innerHTML = '<p>Loading post...</p>';
+    
+    fetch("/embed?url=" + encodeURIComponent(postUrl))
+        .then(response => response.json())
+        .then(embedData => {
+            console.log('oEmbed data:', embedData);
+            if (embedData.html) {
+                // Use the official Bluesky oEmbed HTML
+                postElement.innerHTML = embedData.html;
+            } else {
+                // Fallback to custom display
+                displayCustomPost(postElement, winner, postUrl);
+            }
+        })
+        .catch(error => {
+            console.error('Failed to fetch oEmbed, using fallback display:', error);
+            // Fallback to custom display
+            displayCustomPost(postElement, winner, postUrl);
+        });
+}
+
+function displayCustomPost(postElement, winner, postUrl) {
     let postHtml = '<div class="bluesky-post-embed" style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin: 20px 0; background: #f9f9f9;">';
     
     // Add post text if available
