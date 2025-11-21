@@ -47,7 +47,18 @@ function showNextWinner() {
                 // Use the official Bluesky oEmbed HTML
                 // Note: We trust the HTML from Bluesky's official oEmbed API (embed.bsky.app)
                 // as it's a trusted source. The API returns sanitized, safe HTML.
-                postElement.innerHTML = embedData.html;
+                let displayHtml = '';
+                
+                // Add image if available (oEmbed doesn't include images)
+                if (winner.imageUrl) {
+                    console.log('Adding image with URL:', winner.imageUrl);
+                    displayHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;" onerror="console.error(\'Image failed to load:\', this.src)">';
+                }
+                
+                // Add the oEmbed HTML
+                displayHtml += embedData.html;
+                
+                postElement.innerHTML = displayHtml;
             } else {
                 // Fallback to custom display
                 displayCustomPost(postElement, winner, postUrl);
