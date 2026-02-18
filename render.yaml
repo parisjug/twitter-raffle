@@ -11,10 +11,10 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: bluesky.identifier
-        sync: false  # Set to false so you must manually set this value in Render dashboard
+        sync: false  # Must be manually set in the Render dashboard for security
         description: Your Bluesky handle (e.g., yourname.bsky.social) or email address
       - key: bluesky.password
-        sync: false  # Set to false so you must manually set this value in Render dashboard
+        sync: false  # Must be manually set in the Render dashboard for security
         description: Your Bluesky app password (generate from https://bsky.app/settings/app-passwords)
       # Optional: Uncomment the following to use mock data instead of real API
       # - key: bluesky.mock.enabled
