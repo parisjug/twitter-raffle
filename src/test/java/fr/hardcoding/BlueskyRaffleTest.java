@@ -2,6 +2,7 @@ package fr.hardcoding;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
 import org.junit.jupiter.api.*;
 
 import java.nio.file.Files;
@@ -10,6 +11,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.*;
+
 /**
  * Simple high-level tests to validate BlueskyRaffle code works with mock data.
  * 
@@ -17,6 +21,7 @@ import java.util.stream.Stream;
  * mvn test -Dtest=MockDataGenerator -Dbluesky.identifier=<your-handle> -Dbluesky.password=<your-app-password>
  */
 @QuarkusTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BlueskyRaffleTest {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
@@ -40,6 +45,7 @@ public class BlueskyRaffleTest {
     }
 
     @Test
+    @Order(1)
     public void testCanLoadAndParseMockData() {
         Assumptions.assumeTrue(mocksAvailable, "Mock files not available");
         
@@ -52,6 +58,7 @@ public class BlueskyRaffleTest {
     }
 
     @Test
+    @Order(2)
     public void testWinnerCreationFromPost() {
         Assumptions.assumeTrue(mocksAvailable, "Mock files not available");
         
@@ -68,6 +75,7 @@ public class BlueskyRaffleTest {
     }
 
     @Test
+    @Order(3)
     public void testPostFiltering() {
         Assumptions.assumeTrue(mocksAvailable, "Mock files not available");
         
@@ -88,5 +96,27 @@ public class BlueskyRaffleTest {
         Assertions.assertTrue(postsWithImages.size() > 0, "Should find some posts with images");
         
         System.out.println("✓ Found " + postsWithImages.size() + " posts with images out of " + searchResponse.posts.length + " total");
+    }
+
+    @Test
+    @Order(4)
+    public void testOEmbedEndpoint() {
+        Assumptions.assumeTrue(mocksAvailable, "Mock files not available");
+        
+        // Test the /embed endpoint with mock mode
+        String testPostUrl = "https://bsky.app/profile/testuser.bsky.social/post/3m5ypww5hvs2j";
+        
+        given()
+            .queryParam("url", testPostUrl)
+        .when()
+            .get("/embed")
+        .then()
+            .statusCode(200)
+            .body("url", equalTo(testPostUrl))
+            .body("author_name", notNullValue())
+            .body("html", notNullValue())
+            .body("html", containsString("blockquote"));
+        
+        System.out.println("✓ OEmbed endpoint works correctly");
     }
 }

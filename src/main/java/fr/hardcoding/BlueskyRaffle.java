@@ -43,8 +43,19 @@ public class BlueskyRaffle {
     @Inject
     MockBlueskyClient mockBlueskyClient;
 
+    @Inject
+    @RestClient
+    OEmbedClient oembedClient;
+
+    @Inject
+    MockOEmbedClient mockOEmbedClient;
+
     private BlueskyClient getClient() {
         return mockEnabled ? mockBlueskyClient : blueskyClient;
+    }
+
+    private OEmbedClient getOEmbedClient() {
+        return mockEnabled ? mockOEmbedClient : oembedClient;
     }
 
     private String getAccessToken() {
@@ -90,24 +101,46 @@ public class BlueskyRaffle {
     @GET
     @Produces(APPLICATION_JSON)
     public Post getEmbed(@QueryParam("url") String url) {
-        // Simple embed support - extract info from URL and return minimal data
-        // URL format: https://bsky.app/profile/{handle}/post/{postId}
-        Post post = new Post();
-        post.url = url;
-        
         try {
-            String[] parts = url.split("/");
-            if (parts.length >= 6) {
-                String handle = parts[4];
-                post.author_name = handle;
-                post.author_url = "https://bsky.app/profile/" + handle;
-                post.html = "<div class='bluesky-embed'><a href='" + url + "' target='_blank'>View post on Bluesky</a></div>";
+            // Call Bluesky's official oEmbed API
+            OEmbedClient.OEmbedResponse oembedResponse = getOEmbedClient().getOEmbed(url);
+            
+            // Convert to Post format
+            Post post = new Post();
+            post.url = url;
+            post.author_name = oembedResponse.author_name;
+            post.author_url = oembedResponse.author_url;
+            post.html = oembedResponse.html;
+            
+            // Ensure we have HTML content
+            if (post.html == null || post.html.isEmpty()) {
+                LOGGER.warning("oEmbed response missing HTML for URL: " + url);
+                throw new RuntimeException("Invalid oEmbed response");
             }
+            
+            LOGGER.info("Successfully fetched oEmbed for URL: " + url);
+            return post;
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to parse Bluesky URL: " + url, e);
+            LOGGER.log(Level.WARNING, "Failed to fetch oEmbed for URL: " + url, e);
+            
+            // Fallback to simple embed if oEmbed API fails
+            Post post = new Post();
+            post.url = url;
+            
+            try {
+                String[] parts = url.split("/");
+                if (parts.length >= 6) {
+                    String handle = parts[4];
+                    post.author_name = handle;
+                    post.author_url = "https://bsky.app/profile/" + handle;
+                    post.html = "<div class='bluesky-embed'><a href='" + url + "' target='_blank'>View post on Bluesky</a></div>";
+                }
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Failed to parse Bluesky URL: " + url, ex);
+            }
+            
+            return post;
         }
-        
-        return post;
     }
 
     private List<Winner> performRaffle(String speaker) {
