@@ -35,40 +35,47 @@ function showNextWinner() {
     // Update winner panel
     document.getElementById('winner-name').innerHTML = winner.name + ' (<cite>@' + winner.screenName + '</cite>)';
     
-    // Try to fetch and use Bluesky's official oEmbed
     const postElement = document.getElementById('post');
-    postElement.innerHTML = '<p>Loading post...</p>';
+    const useOEmbed = document.getElementById('use-oembed').checked;
     
-    fetch("/embed?url=" + encodeURIComponent(postUrl))
-        .then(response => response.json())
-        .then(embedData => {
-            console.log('oEmbed data:', embedData);
-            if (embedData.html) {
-                // Use the official Bluesky oEmbed HTML
-                // Note: We trust the HTML from Bluesky's official oEmbed API (embed.bsky.app)
-                // as it's a trusted source. The API returns sanitized, safe HTML.
-                let displayHtml = '';
-                
-                // Add image if available (oEmbed doesn't include images)
-                if (winner.imageUrl) {
-                    console.log('Adding image with URL:', winner.imageUrl);
-                    displayHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;" onerror="console.error(\'Image failed to load:\', this.src)">';
+    if (useOEmbed) {
+        // Try to fetch and use Bluesky's official oEmbed
+        postElement.innerHTML = '<p>Loading post...</p>';
+        
+        fetch("/embed?url=" + encodeURIComponent(postUrl))
+            .then(response => response.json())
+            .then(embedData => {
+                console.log('oEmbed data:', embedData);
+                if (embedData.html) {
+                    // Use the official Bluesky oEmbed HTML
+                    // Note: We trust the HTML from Bluesky's official oEmbed API (embed.bsky.app)
+                    // as it's a trusted source. The API returns sanitized, safe HTML.
+                    let displayHtml = '';
+                    
+                    // Add image if available (oEmbed doesn't include images)
+                    if (winner.imageUrl) {
+                        console.log('Adding image with URL:', winner.imageUrl);
+                        displayHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;" onerror="console.error(\'Image failed to load:\', this.src)">';
+                    }
+                    
+                    // Add the oEmbed HTML
+                    displayHtml += embedData.html;
+                    
+                    postElement.innerHTML = displayHtml;
+                } else {
+                    // Fallback to custom display
+                    displayCustomPost(postElement, winner, postUrl);
                 }
-                
-                // Add the oEmbed HTML
-                displayHtml += embedData.html;
-                
-                postElement.innerHTML = displayHtml;
-            } else {
+            })
+            .catch(error => {
+                console.error('Failed to fetch oEmbed, using fallback display:', error);
                 // Fallback to custom display
                 displayCustomPost(postElement, winner, postUrl);
-            }
-        })
-        .catch(error => {
-            console.error('Failed to fetch oEmbed, using fallback display:', error);
-            // Fallback to custom display
-            displayCustomPost(postElement, winner, postUrl);
-        });
+            });
+    } else {
+        // Use custom display directly
+        displayCustomPost(postElement, winner, postUrl);
+    }
 }
 
 function displayCustomPost(postElement, winner, postUrl) {
