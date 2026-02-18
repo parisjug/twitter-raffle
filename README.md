@@ -189,6 +189,29 @@ The application will be accessible at `http://localhost:8080`
 
 #### Deployment Steps
 
+**Option 1: One-Click Deployment (Recommended)**
+
+This repository includes a `render.yaml` file for easy deployment:
+
+1. **Fork or push this repository** to your GitHub account
+
+2. **Click the "Deploy to Render" button** or manually:
+   - Go to your [Render dashboard](https://dashboard.render.com)
+   - Click "New +" and select "Blueprint"
+   - Connect your GitHub repository
+   - Render will automatically detect the `render.yaml` file
+
+3. **Set your Bluesky credentials:**
+   - In the Render dashboard, navigate to your service
+   - Go to "Environment" section
+   - Set values for:
+     - `bluesky.identifier`: Your Bluesky handle or email
+     - `bluesky.password`: Your Bluesky app password
+
+4. **Deploy**: Render will automatically build and deploy your application
+
+**Option 2: Manual Deployment**
+
 1. **Fork or push this repository** to your GitHub account
 
 2. **Create a new Web Service** on Render.com:

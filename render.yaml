@@ -1,0 +1,21 @@
+# This file configures the application for deployment on Render.com
+# Place this file in the root of your repository for one-click deployment
+# Visit https://render.com for more information
+
+services:
+  - type: web
+    name: bluesky-raffle
+    env: docker
+    plan: free  # You can change this to 'starter' or other paid plans for better performance
+    branch: main  # Change this if you want to deploy from a different branch
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: bluesky.identifier
+        sync: false  # Set to false so you must manually set this value in Render dashboard
+        description: Your Bluesky handle (e.g., yourname.bsky.social) or email address
+      - key: bluesky.password
+        sync: false  # Set to false so you must manually set this value in Render dashboard
+        description: Your Bluesky app password (generate from https://bsky.app/settings/app-passwords)
+      # Optional: Uncomment the following to use mock data instead of real API
+      # - key: bluesky.mock.enabled
+      #   value: "true"
