@@ -1,7 +1,10 @@
 *
 !pom.xml
-!src/*
-!resources/*
+!.mvn/**
+!mvnw
+!mvnw.cmd
+!src/**
+!resources/**
 !target/*-runner
 !target/*-runner.jar
-!target/lib/*
+!target/lib/**

@@ -145,3 +145,132 @@ To update mock data with current API responses:
 
 This ensures tests remain stable while allowing periodic updates to reflect API changes.
 
+## Deployment
+
+### Docker Deployment
+
+The application can be deployed using Docker. A Dockerfile is provided that uses a multi-stage build to create an optimized container image.
+
+#### Building the Docker Image
+
+```shell
+docker build -t bluesky-raffle .
+```
+
+#### Running the Docker Container
+
+**With Mock Data (No Credentials Required):**
+
+```shell
+docker run -p 8080:8080 -e bluesky.mock.enabled=true bluesky-raffle
+```
+
+**With Real Bluesky API:**
+
+```shell
+docker run -p 8080:8080 \
+  -e bluesky.identifier=<your-handle-or-email> \
+  -e bluesky.password=<your-app-password> \
+  bluesky-raffle
+```
+
+The application will be accessible at `http://localhost:8080`
+
+### Deploying to Render.com
+
+[Render.com](https://render.com) makes it easy to deploy containerized applications. Follow these steps:
+
+#### Prerequisites
+
+1. A Render.com account (sign up at https://render.com)
+2. Your Bluesky credentials:
+   - **Handle or Email**: Your Bluesky account identifier (e.g., `yourname.bsky.social` or `your@email.com`)
+   - **App Password**: Generate this from your Bluesky account settings at https://bsky.app/settings/app-passwords
+
+#### Deployment Steps
+
+**Option 1: One-Click Deployment (Recommended)**
+
+This repository includes a `render.yaml` file for easy deployment:
+
+1. **Fork or push this repository** to your GitHub account
+
+2. **Click the "Deploy to Render" button** or manually:
+   - Go to your [Render dashboard](https://dashboard.render.com)
+   - Click "New +" and select "Blueprint"
+   - Connect your GitHub repository
+   - Render will automatically detect the `render.yaml` file
+
+3. **Set your Bluesky credentials:**
+   - In the Render dashboard, navigate to your service
+   - Go to "Environment" section
+   - Set values for:
+     - `bluesky.identifier`: Your Bluesky handle or email
+     - `bluesky.password`: Your Bluesky app password
+
+4. **Deploy**: Render will automatically build and deploy your application
+
+**Option 2: Manual Deployment**
+
+1. **Fork or push this repository** to your GitHub account
+
+2. **Create a new Web Service** on Render.com:
+   - Go to your Render dashboard
+   - Click "New +" and select "Web Service"
+   - Connect your GitHub repository
+
+3. **Configure the service:**
+   - **Name**: `bluesky-raffle` (or your preferred name)
+   - **Environment**: `Docker`
+   - **Branch**: `main` (or your default branch)
+   - **Instance Type**: Choose based on your needs (Free tier works fine for testing)
+
+4. **Add Environment Variables:**
+   
+   Click "Add Environment Variable" and add the following:
+
+   | Key | Value | Description |
+   |-----|-------|-------------|
+   | `bluesky.identifier` | `your-handle-or-email` | Your Bluesky handle (e.g., `yourname.bsky.social`) or email |
+   | `bluesky.password` | `your-app-password` | Your Bluesky app password (generate from https://bsky.app/settings/app-passwords) |
+
+   **Optional: For testing with mock data instead:**
+   
+   | Key | Value | Description |
+   |-----|-------|-------------|
+   | `bluesky.mock.enabled` | `true` | Use mock data instead of real Bluesky API |
+
+5. **Deploy:**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy your application
+   - Once deployed, your app will be available at: `https://your-service-name.onrender.com`
+
+#### Important Notes for Render.com
+
+- **App Passwords**: Never use your main Bluesky password. Always generate an app-specific password from your Bluesky account settings.
+- **Free Tier Limitations**: Free tier services on Render.com may spin down after periods of inactivity and take 30-60 seconds to restart.
+- **Environment Variables**: Environment variables are securely stored and not exposed in logs.
+- **HTTPS**: Render automatically provides HTTPS for your application.
+- **Auto-Deploy**: Enable auto-deploy in Render settings to automatically redeploy when you push to your repository.
+
+#### Troubleshooting Render.com Deployment
+
+If your deployment fails, check the following:
+
+1. **Build logs**: Review the build logs in the Render dashboard for errors
+2. **Runtime logs**: Check the runtime logs for application errors
+3. **Environment variables**: Verify that `bluesky.identifier` and `bluesky.password` are correctly set
+4. **Port configuration**: The application runs on port 8080 by default (Render auto-detects this from the Dockerfile)
+
+### Other Deployment Options
+
+The Docker image can also be deployed to other container platforms:
+- **Heroku**: Use the Container Registry
+- **Google Cloud Run**: Deploy container images directly
+- **AWS ECS/Fargate**: Container orchestration on AWS
+- **Azure Container Instances**: Serverless containers on Azure
+- **DigitalOcean App Platform**: Similar to Render.com
+- **Fly.io**: Edge deployment platform
+
+For all platforms, remember to set the `bluesky.identifier` and `bluesky.password` environment variables.
+
