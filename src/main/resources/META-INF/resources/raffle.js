@@ -1,104 +1,192 @@
 let globalWinners = [];
 let globalCurrentWinner = -1;
 
+// ── Confetti ──────────────────────────────────────────────────────────────────
+
+const CONFETTI_COLORS = ['#e2001a', '#58a6ff', '#f0f6fc', '#ffd700', '#ff6b6b', '#00d4aa'];
+const CONFETTI_DURATION_MS = 3500;
+
+function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = Array.from({ length: 160 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * 120,
+        w: 8 + Math.random() * 8,
+        h: 4 + Math.random() * 4,
+        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 3 + Math.random() * 4,
+        angle: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.2,
+        opacity: 1,
+    }));
+
+    let frame;
+    const endTime = Date.now() + CONFETTI_DURATION_MS;
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const now = Date.now();
+        const remaining = endTime - now;
+
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.angle += p.spin;
+            p.vy += 0.07; // gravity
+            if (remaining < 800) p.opacity = Math.max(0, remaining / 800);
+
+            ctx.save();
+            ctx.globalAlpha = p.opacity;
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.angle);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+        });
+
+        if (now < endTime) {
+            frame = requestAnimationFrame(draw);
+        } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    if (frame) cancelAnimationFrame(frame);
+    draw();
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+
+/**
+ * Runs a 3-second countdown overlay, then calls {@code callback}.
+ */
+function runCountdown(callback) {
+    const overlay = document.getElementById('countdown-overlay');
+    const numberEl = document.getElementById('countdown-number');
+    let count = 3;
+
+    numberEl.textContent = count;
+    overlay.classList.add('active');
+
+    function tick() {
+        // Pulse animation
+        numberEl.classList.add('pulse');
+        setTimeout(() => numberEl.classList.remove('pulse'), 150);
+
+        if (count <= 0) {
+            overlay.classList.remove('active');
+            callback();
+            return;
+        }
+        numberEl.textContent = count;
+        count--;
+        setTimeout(tick, 1000);
+    }
+    tick();
+}
+
+// ── Raffle logic ──────────────────────────────────────────────────────────────
+
 function performRaffle() {
     const speaker = document.getElementById('speaker').value;
-    fetch("/raffle?speaker=" + speaker)
-        .then(response => response.json())
-        .then(winners => showWinners(winners));
+    const btn = document.getElementById('btn-raffle');
+    btn.disabled = true;
+
+    runCountdown(() => {
+        fetch("/raffle?speaker=" + encodeURIComponent(speaker))
+            .then(response => response.json())
+            .then(winners => {
+                btn.disabled = false;
+                showWinners(winners);
+            })
+            .catch(() => {
+                btn.disabled = false;
+            });
+    });
 }
 
 function showWinners(winners) {
     globalWinners = winners;
+    globalCurrentWinner = -1;
     showNextWinner();
 }
 
 function showNextWinner() {
     globalCurrentWinner++;
     if (globalCurrentWinner >= globalWinners.length) {
-        // No more winners
         showNoWinnerFound();
         return;
     }
-    // Get next winner
+
     const winner = globalWinners[globalCurrentWinner];
     const postUrl = winner.postUrl;
-    
-    // Debug logging
-    console.log('Winner data:', winner);
-    console.log('Image URL:', winner.imageUrl);
-    
-    // Ensure winner panel is shown
+
+    // Switch panels
     document.getElementById('home').classList.add('hidden');
-    document.getElementById('winner').classList.remove('hidden');
-    
-    // Update winner panel
-    document.getElementById('winner-name').innerHTML = winner.name + ' (<cite>@' + winner.screenName + '</cite>)';
-    
+    const winnerEl = document.getElementById('winner');
+    winnerEl.classList.remove('visible');
+    // Force reflow so animation replays
+    void winnerEl.offsetWidth;
+    winnerEl.classList.add('visible');
+
+    document.getElementById('winner-name').innerHTML =
+        winner.name + ' (<cite>@' + escapeHtml(winner.screenName) + '</cite>)';
+
     const postElement = document.getElementById('post');
     const useOEmbed = document.getElementById('use-oembed').checked;
-    
+
+    launchConfetti();
+
     if (useOEmbed) {
-        // Try to fetch and use Bluesky's official oEmbed
-        postElement.innerHTML = '<p>Loading post...</p>';
-        
+        postElement.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:1rem;">Chargement du post…</p>';
+
         fetch("/embed?url=" + encodeURIComponent(postUrl))
             .then(response => response.json())
             .then(embedData => {
-                console.log('oEmbed data:', embedData);
                 if (embedData.html) {
-                    // Use the official Bluesky oEmbed HTML
-                    // Note: We trust the HTML from Bluesky's official oEmbed API (embed.bsky.app)
-                    // as it's a trusted source. The API returns sanitized, safe HTML.
                     let displayHtml = '';
-                    
-                    // Add image if available (oEmbed doesn't include images)
                     if (winner.imageUrl) {
-                        console.log('Adding image with URL:', winner.imageUrl);
-                        displayHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;" onerror="console.error(\'Image failed to load:\', this.src)">';
+                        displayHtml += '<img src="' + escapeHtml(winner.imageUrl) +
+                            '" alt="Post image" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" ' +
+                            'onerror="this.style.display=\'none\'">';
                     }
-                    
-                    // Add the oEmbed HTML
                     displayHtml += embedData.html;
-                    
                     postElement.innerHTML = displayHtml;
                 } else {
-                    // Fallback to custom display
                     displayCustomPost(postElement, winner, postUrl);
                 }
             })
-            .catch(error => {
-                console.error('Failed to fetch oEmbed, using fallback display:', error);
-                // Fallback to custom display
-                displayCustomPost(postElement, winner, postUrl);
-            });
+            .catch(() => displayCustomPost(postElement, winner, postUrl));
     } else {
-        // Use custom display directly
         displayCustomPost(postElement, winner, postUrl);
     }
 }
 
 function displayCustomPost(postElement, winner, postUrl) {
-    let postHtml = '<div class="bluesky-post-embed" style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin: 20px 0; background: #f9f9f9;">';
-    
-    // Add post text if available
+    let html = '<div style="border:1px solid var(--border);padding:1.25rem;border-radius:10px;background:var(--card-bg);">';
+
     if (winner.postText) {
-        postHtml += '<p style="font-size: 16px; line-height: 1.5; margin-bottom: 10px;">' + escapeHtml(winner.postText) + '</p>';
+        html += '<p style="font-size:1.1rem;line-height:1.6;margin-bottom:0.75rem;color:var(--text-primary);">' +
+            escapeHtml(winner.postText) + '</p>';
     }
-    
-    // Add image if available
+
     if (winner.imageUrl) {
-        console.log('Adding image with URL:', winner.imageUrl);
-        postHtml += '<img src="' + escapeHtml(winner.imageUrl) + '" alt="Post image" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;" onerror="console.error(\'Image failed to load:\', this.src)">';
-    } else {
-        console.log('No image URL available');
+        html += '<img src="' + escapeHtml(winner.imageUrl) +
+            '" alt="Post image" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:0.75rem;" ' +
+            'onerror="this.style.display=\'none\'">';
     }
-    
-    // Add link to view on Bluesky
-    postHtml += '<p style="margin-top: 10px;"><a href="' + escapeHtml(postUrl) + '" target="_blank" style="color: #0085ff; text-decoration: none;">View on Bluesky →</a></p>';
-    postHtml += '</div>';
-    
-    postElement.innerHTML = postHtml;
+
+    html += '<a href="' + escapeHtml(postUrl) +
+        '" target="_blank" style="color:var(--accent);text-decoration:none;font-size:0.9rem;">Voir sur Bluesky &#x2192;</a>';
+    html += '</div>';
+
+    postElement.innerHTML = html;
 }
 
 function escapeHtml(text) {
@@ -108,5 +196,11 @@ function escapeHtml(text) {
 }
 
 function showNoWinnerFound() {
-
+    const winnerEl = document.getElementById('winner');
+    winnerEl.classList.remove('visible');
+    void winnerEl.offsetWidth;
+    winnerEl.classList.add('visible');
+    document.getElementById('winner-name').innerHTML = '';
+    document.getElementById('post').innerHTML =
+        '<p style="color:var(--text-secondary);text-align:center;padding:2rem;">Aucun gagnant trouv&eacute;.</p>';
 }
