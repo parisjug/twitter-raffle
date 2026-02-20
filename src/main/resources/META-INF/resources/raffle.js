@@ -1,5 +1,6 @@
 let globalWinners = [];
 let globalCurrentWinner = -1;
+let globalCandidates = [];
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
 
@@ -64,31 +65,92 @@ function launchConfetti() {
 // ── Countdown ─────────────────────────────────────────────────────────────────
 
 /**
- * Runs a 3-second countdown overlay, then calls {@code callback}.
+ * Runs a 3-second countdown overlay and returns a Promise that resolves when done.
  */
-function runCountdown(callback) {
-    const overlay = document.getElementById('countdown-overlay');
-    const numberEl = document.getElementById('countdown-number');
-    let count = 3;
+function runCountdown() {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('countdown-overlay');
+        const numberEl = document.getElementById('countdown-number');
+        let count = 3;
 
-    numberEl.textContent = count;
-    overlay.classList.add('active');
-
-    function tick() {
-        // Pulse animation
-        numberEl.classList.add('pulse');
-        setTimeout(() => numberEl.classList.remove('pulse'), 150);
-
-        if (count <= 0) {
-            overlay.classList.remove('active');
-            callback();
-            return;
-        }
         numberEl.textContent = count;
-        count--;
-        setTimeout(tick, 1000);
-    }
-    tick();
+        overlay.classList.add('active');
+
+        function tick() {
+            numberEl.classList.add('pulse');
+            setTimeout(() => numberEl.classList.remove('pulse'), 150);
+
+            if (count <= 0) {
+                overlay.classList.remove('active');
+                resolve();
+                return;
+            }
+            numberEl.textContent = count;
+            count--;
+            setTimeout(tick, 1000);
+        }
+        tick();
+    });
+}
+
+// ── Slot machine ──────────────────────────────────────────────────────────────
+
+/**
+ * Shows the candidates slot-machine panel, cycles through names, then lands on
+ * the winner. Returns a Promise that resolves once the winner is shown briefly.
+ */
+function runSlotMachine(candidates, winner) {
+    return new Promise(resolve => {
+        const panel = document.getElementById('candidates');
+        const slotName = document.getElementById('slot-name');
+        const slotHandle = document.getElementById('slot-handle');
+        const slotMachine = document.getElementById('slot-machine');
+
+        // Show candidates panel, hide others
+        document.getElementById('home').classList.add('hidden');
+        document.getElementById('winner').classList.remove('visible');
+        panel.classList.remove('visible');
+        void panel.offsetWidth; // force reflow for animation
+        panel.classList.add('visible');
+
+        // If no candidates to cycle, skip animation
+        const pool = candidates && candidates.length > 0 ? candidates : [winner];
+        // Exclude the winner from the cycling pool to avoid revealing early.
+        // If there's only one candidate (the winner), they will appear during cycling — that's acceptable.
+        const others = pool.filter(c => c.screenName !== winner.screenName);
+        const cyclePool = others.length > 0 ? others : pool;
+
+        const startTime = Date.now();
+        const duration = 3500; // ms of cycling before landing
+
+        function cycle() {
+            const elapsed = Date.now() - startTime;
+            if (elapsed < duration) {
+                // Exponential slow-down: delay grows from min 80ms to max 600ms (80 + 520)
+                const progress = elapsed / duration;
+                const delay = Math.round(80 + Math.pow(progress, 2) * 520);
+
+                const c = cyclePool[Math.floor(Math.random() * cyclePool.length)];
+                slotName.textContent = c.name || c.screenName;
+                slotHandle.textContent = '@' + c.screenName;
+
+                setTimeout(cycle, delay);
+            } else {
+                // Land on winner
+                slotName.textContent = winner.name || winner.screenName;
+                slotHandle.textContent = '@' + winner.screenName;
+                slotMachine.classList.add('locked');
+
+                // Hold for 1.5 s, then hide panel and resolve
+                setTimeout(() => {
+                    panel.classList.remove('visible');
+                    slotMachine.classList.remove('locked');
+                    resolve();
+                }, 1500);
+            }
+        }
+        cycle();
+    });
 }
 
 // ── Raffle logic ──────────────────────────────────────────────────────────────
@@ -98,25 +160,37 @@ function performRaffle() {
     const btn = document.getElementById('btn-raffle');
     btn.disabled = true;
 
-    runCountdown(() => {
-        fetch("/raffle?speaker=" + encodeURIComponent(speaker))
-            .then(response => response.json())
-            .then(winners => {
-                btn.disabled = false;
-                showWinners(winners);
-            })
-            .catch(() => {
-                btn.disabled = false;
-            });
-    });
+    // Start fetching candidates + raffle concurrently with the countdown
+    const fetchRaffle = fetch("/raffle?speaker=" + encodeURIComponent(speaker))
+        .then(r => r.json());
+    const fetchCandidates = fetch("/candidates?speaker=" + encodeURIComponent(speaker))
+        .then(r => r.json())
+        .catch(() => []); // graceful fallback if endpoint unavailable
+
+    Promise.all([runCountdown(), fetchRaffle, fetchCandidates])
+        .then(([, winners, candidates]) => {
+            btn.disabled = false;
+            globalWinners = winners;
+            globalCurrentWinner = -1;
+            // Use candidates list; fall back to winners list if empty
+            globalCandidates = candidates.length > 0 ? candidates : winners;
+            showNextWinner();
+        })
+        .catch(() => {
+            btn.disabled = false;
+        });
 }
 
-function showWinners(winners) {
-    globalWinners = winners;
-    globalCurrentWinner = -1;
-    showNextWinner();
+/**
+ * Called by the "next winner" button — runs countdown first, then reveals.
+ */
+function nextWinner() {
+    runCountdown().then(() => showNextWinner());
 }
 
+/**
+ * Advances to the next winner: shows the slot-machine then the winner panel.
+ */
 function showNextWinner() {
     globalCurrentWinner++;
     if (globalCurrentWinner >= globalWinners.length) {
@@ -125,14 +199,18 @@ function showNextWinner() {
     }
 
     const winner = globalWinners[globalCurrentWinner];
+
+    runSlotMachine(globalCandidates, winner).then(() => {
+        displayWinner(winner);
+    });
+}
+
+function displayWinner(winner) {
     const postUrl = winner.postUrl;
 
-    // Switch panels
-    document.getElementById('home').classList.add('hidden');
     const winnerEl = document.getElementById('winner');
     winnerEl.classList.remove('visible');
-    // Force reflow so animation replays
-    void winnerEl.offsetWidth;
+    void winnerEl.offsetWidth; // force reflow so animation replays
     winnerEl.classList.add('visible');
 
     document.getElementById('winner-name').innerHTML =
@@ -147,7 +225,7 @@ function showNextWinner() {
         postElement.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:1rem;">Chargement du post…</p>';
 
         fetch("/embed?url=" + encodeURIComponent(postUrl))
-            .then(response => response.json())
+            .then(r => r.json())
             .then(embedData => {
                 if (embedData.html) {
                     let displayHtml = '';
