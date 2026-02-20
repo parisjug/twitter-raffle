@@ -195,7 +195,7 @@ public class BlueskyRaffle {
      * Returns true when the post has at least one image embed.
      * Checks view embed ($type ending in #view) to handle all embed types including recordWithMedia.
      */
-    private boolean hasImage(BlueskyPost post) {
+    boolean hasImage(BlueskyPost post) {
         BlueskyPost.Embed embed = post.embed;
         if (embed == null) return false;
         String type = embed.$type != null ? embed.$type : "";
@@ -209,7 +209,7 @@ public class BlueskyRaffle {
     /**
      * Returns true when the post is from within the last week.
      */
-    private boolean isFromThisWeek(BlueskyPost post) {
+    boolean isFromThisWeek(BlueskyPost post) {
         String dateStr = post.record != null && post.record.createdAt != null
                 ? post.record.createdAt : post.indexedAt;
         if (dateStr == null) return false;

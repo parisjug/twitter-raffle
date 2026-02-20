@@ -79,21 +79,32 @@ public class BlueskyRaffleTest {
     public void testPostFiltering() {
         Assumptions.assumeTrue(mocksAvailable, "Mock files not available");
         
-        // Test filtering posts (basic functionality that BlueskyRaffle uses)
+        // Test filtering posts using the new $type-based image detection (matching reference app)
         List<BlueskyPost> postsWithImages = Stream.of(searchResponse.posts)
             .filter(post -> {
-                // Has images in embed
-                if (post.record != null && post.record.embed != null && post.record.embed.images != null && post.record.embed.images.length > 0) {
-                    return true;
-                }
-                if (post.embed != null && post.embed.images != null && post.embed.images.length > 0) {
-                    return true;
+                BlueskyPost.Embed embed = post.embed;
+                if (embed == null) return false;
+                String type = embed.$type != null ? embed.$type : "";
+                if ("app.bsky.embed.images#view".equals(type)) return true;
+                if ("app.bsky.embed.recordWithMedia#view".equals(type) && embed.media != null) {
+                    return "app.bsky.embed.images#view".equals(embed.media.$type);
                 }
                 return false;
             })
             .collect(Collectors.toList());
         
         Assertions.assertTrue(postsWithImages.size() > 0, "Should find some posts with images");
+        
+        // All detected posts should have the correct $type
+        for (BlueskyPost post : postsWithImages) {
+            String type = post.embed != null ? post.embed.$type : null;
+            boolean isDirectImage = "app.bsky.embed.images#view".equals(type);
+            boolean isRecordWithMediaImage = "app.bsky.embed.recordWithMedia#view".equals(type)
+                    && post.embed.media != null
+                    && "app.bsky.embed.images#view".equals(post.embed.media.$type);
+            Assertions.assertTrue(isDirectImage || isRecordWithMediaImage,
+                    "Post should have image embed type, got: " + type);
+        }
         
         System.out.println("✓ Found " + postsWithImages.size() + " posts with images out of " + searchResponse.posts.length + " total");
     }
