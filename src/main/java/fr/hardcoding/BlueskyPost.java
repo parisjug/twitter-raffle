@@ -1,6 +1,7 @@
 package fr.hardcoding;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @RegisterForReflection
@@ -36,8 +37,10 @@ public class BlueskyPost {
     @RegisterForReflection
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Embed {
-        public String type;
+        @JsonProperty("$type")
+        public String $type;
         public Image[] images;
+        public Embed media;
     }
 
     @RegisterForReflection
