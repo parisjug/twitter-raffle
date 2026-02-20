@@ -24,7 +24,7 @@ public class BlueskyRaffle {
     private static final Logger LOGGER = Logger.getLogger(BlueskyRaffle.class.getName());
     private static final int WINNER_COUNT = 10;
     private static final int MAX_RESULT = 100;
-    private static final int SEARCH_LIMIT = 25;
+    private static final int SEARCH_LIMIT = 100;
     private static final long ONE_WEEK_MS = 7L * 24 * 60 * 60 * 1000;
     private static final String EMBED_TYPE_IMAGES_VIEW = "app.bsky.embed.images#view";
     private static final String EMBED_TYPE_RECORD_WITH_MEDIA_VIEW = "app.bsky.embed.recordWithMedia#view";
@@ -163,18 +163,25 @@ public class BlueskyRaffle {
 
         return winningUsers.stream()
                 .map(userPosts::get)
-                .map(list -> list.get(0))
+                .map(list -> list.get(rand.nextInt(list.size()))) // Pick random post from user's posts
                 .map(Winner::fromBlueskyPost)
                 .collect(Collectors.toList());
     }
 
     private String getQuery(String speaker) {
-        // Must mention ParisJUG and the given speaker
-        return "parisjug " + speaker;
+        // Search for all posts by the given user
+        return "@" + speaker;
     }
 
     private Predicate<BlueskyPost> getPostFilter(String speaker) {
         return post -> {
+            // Filter out posts that don't contain "parisjug"
+            if (post.record == null || post.record.text == null || 
+                !post.record.text.toLowerCase().contains("parisjug")) {
+                LOGGER.info("Filtering post without 'parisjug' mention: " + post.uri);
+                return false;
+            }
+
             // Filter out posts without images (using view embed, same as reference app)
             if (!hasImage(post)) {
                 LOGGER.info("Filtering post without images: " + post.uri);
