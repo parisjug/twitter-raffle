@@ -9,6 +9,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -24,6 +25,9 @@ public class BlueskyRaffle {
     private static final int WINNER_COUNT = 10;
     private static final int MAX_RESULT = 100;
     private static final int SEARCH_LIMIT = 25;
+    private static final long ONE_WEEK_MS = 7L * 24 * 60 * 60 * 1000;
+    private static final String EMBED_TYPE_IMAGES_VIEW = "app.bsky.embed.images#view";
+    private static final String EMBED_TYPE_RECORD_WITH_MEDIA_VIEW = "app.bsky.embed.recordWithMedia#view";
 
     private String accessToken = null;
 
@@ -171,30 +175,50 @@ public class BlueskyRaffle {
 
     private Predicate<BlueskyPost> getPostFilter(String speaker) {
         return post -> {
-            // Filter out posts without images
-            if (post.record == null || post.record.embed == null || 
-                post.record.embed.images == null || post.record.embed.images.length == 0) {
+            // Filter out posts without images (using view embed, same as reference app)
+            if (!hasImage(post)) {
                 LOGGER.info("Filtering post without images: " + post.uri);
                 return false;
             }
 
-            // Remove parisjug, given speaker, white spaces, and check if remains few text
-            String text = post.record.text;
-            String originalText = text;
-            text = text.toLowerCase();
-            text = text.replace("parisjug", "");
-            for (String part : speaker.toLowerCase().split(" ")) {
-                text = text.replace(part, "");
-            }
-            // Remove URLs (Bluesky uses different URL format)
-            text = text.replaceAll("https?://[^\\s]+", "");
-            text = text.replaceAll("[ \n]", "");
-            if (text.length() <= 5) {
-                LOGGER.info("Filtering post with too little content: " + originalText);
+            // Filter out posts older than one week
+            if (!isFromThisWeek(post)) {
+                LOGGER.info("Filtering old post: " + post.uri);
                 return false;
             }
+
             return true;
         };
+    }
+
+    /**
+     * Returns true when the post has at least one image embed.
+     * Checks view embed ($type ending in #view) to handle all embed types including recordWithMedia.
+     */
+    boolean hasImage(BlueskyPost post) {
+        BlueskyPost.Embed embed = post.embed;
+        if (embed == null) return false;
+        String type = embed.$type != null ? embed.$type : "";
+        if (EMBED_TYPE_IMAGES_VIEW.equals(type)) return true;
+        if (EMBED_TYPE_RECORD_WITH_MEDIA_VIEW.equals(type) && embed.media != null) {
+            return EMBED_TYPE_IMAGES_VIEW.equals(embed.media.$type);
+        }
+        return false;
+    }
+
+    /**
+     * Returns true when the post is from within the last week.
+     */
+    boolean isFromThisWeek(BlueskyPost post) {
+        String dateStr = post.record != null && post.record.createdAt != null
+                ? post.record.createdAt : post.indexedAt;
+        if (dateStr == null) return false;
+        try {
+            Instant created = Instant.parse(dateStr);
+            return (Instant.now().toEpochMilli() - created.toEpochMilli()) <= ONE_WEEK_MS;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private Map<String, List<BlueskyPost>> performQuery(String query, Predicate<BlueskyPost> filter) {
