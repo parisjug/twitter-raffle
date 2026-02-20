@@ -2,6 +2,51 @@ let globalWinners = [];
 let globalCurrentWinner = -1;
 let globalCandidates = [];
 
+// ── URL / sharing ─────────────────────────────────────────────────────────────
+
+/**
+ * Reads the "speaker" query parameter from the current URL and pre-fills the
+ * input so the page can be shared with a pre-selected speaker handle.
+ */
+function initSpeakerFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const speaker = params.get('speaker');
+    if (speaker) {
+        const input = document.getElementById('speaker');
+        if (input) input.value = speaker;
+    }
+}
+
+/**
+ * Updates the browser URL (without reloading) to reflect the current speaker
+ * value so the page can be bookmarked / shared.
+ */
+function updateUrlWithSpeaker(value) {
+    const url = new URL(window.location.href);
+    if (value) {
+        url.searchParams.set('speaker', value);
+    } else {
+        url.searchParams.delete('speaker');
+    }
+    history.replaceState(null, '', url.toString());
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    initSpeakerFromUrl();
+
+    const speakerInput = document.getElementById('speaker');
+    if (speakerInput) {
+        let debounceTimer;
+        speakerInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const value = this.value;
+            debounceTimer = setTimeout(function () {
+                updateUrlWithSpeaker(value);
+            }, 300);
+        });
+    }
+});
+
 // ── Confetti ──────────────────────────────────────────────────────────────────
 
 const CONFETTI_COLORS = ['#e2001a', '#58a6ff', '#f0f6fc', '#ffd700', '#ff6b6b', '#00d4aa'];
