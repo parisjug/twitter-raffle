@@ -2,155 +2,485 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paris JUG - Concours Bluesky</title>
     <style>
-        h1, h2, h3, h4, h5, h6 {
-            margin-bottom: 0.5rem;
-            font-weight: 400;
-            line-height: 1.5;
+        :root {
+            --red: #e2001a;
+            --dark-bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
         }
 
-        h1 {
-            font-size: 2.5rem;
-        }
-
-        h2 {
-            font-size: 2rem
-        }
-
-        h3 {
-            font-size: 1.75rem
-        }
-
-        h4 {
-            font-size: 1.5rem
-        }
-
-        h5 {
-            font-size: 1.25rem
-        }
-
-        h6 {
-            font-size: 1rem
-        }
-
-        .lead {
-            font-weight: 300;
-            font-size: 2rem;
-        }
-
-        .banner {
-            font-size: 2.7rem;
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 2rem 1rem;
-            background-color: rgb(226, 0, 38);
-            color: white;
+            padding: 0;
         }
 
         body {
             margin: 0;
-            font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        code {
-            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 87.5%;
-            color: #e83e8c;
-            word-break: break-word;
+        /* ── Header ─────────────────────────────────────────────── */
+        .banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #1a0005 0%, #2d0008 100%);
+            border-bottom: 3px solid var(--red);
+            box-shadow: 0 4px 20px rgba(226, 0, 26, 0.3);
         }
 
-        .left-column {
-            padding: .75rem;
-            max-width: 75%;
-            min-width: 55%;
+        .banner-title {
+            font-size: clamp(1.6rem, 3vw, 2.8rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: white;
         }
 
-        .left-column.hidden {
+        .banner-title span {
+            color: var(--red);
+        }
+
+        .banner-logo {
+            height: 56px;
+            filter: brightness(0) invert(1);
+        }
+
+        /* ── Main layout ─────────────────────────────────────────── */
+        .container {
+            display: flex;
+            flex: 1;
+        }
+
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: calc(100vh - 90px);
+        }
+
+        .sidebar {
+            width: 340px;
+            min-width: 280px;
+            background: var(--card-bg);
+            border-left: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* ── Home panel ──────────────────────────────────────────── */
+        #home {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2.5rem;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        #home.hidden {
             display: none;
         }
 
-        .left-column img {
-            display: block;
-            margin: 0px auto;
+        .home-logo {
+            width: min(420px, 80%);
+            filter: drop-shadow(0 0 40px rgba(226, 0, 26, 0.4));
+            animation: float 6s ease-in-out infinite;
         }
 
-        .right-column {
-            padding: .75rem;
-            max-width: 25%;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-12px); }
         }
 
-        .container {
+        .home-tagline {
+            font-size: clamp(1.1rem, 2vw, 1.5rem);
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* ── Countdown overlay ───────────────────────────────────── */
+        #countdown-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        #countdown-overlay.active {
             display: flex;
+        }
+
+        .countdown-label {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            color: var(--text-secondary);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        #countdown-number {
+            font-size: clamp(8rem, 20vw, 16rem);
+            font-weight: 900;
+            line-height: 1;
+            color: var(--red);
+            text-shadow: 0 0 60px rgba(226, 0, 26, 0.6);
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        #countdown-number.pulse {
+            transform: scale(1.15);
+            opacity: 0.7;
+        }
+
+        /* ── Winner panel ────────────────────────────────────────── */
+        #winner {
+            display: none;
+            flex-direction: column;
+            align-items: center;
             width: 100%;
+            max-width: 860px;
+            gap: 1.5rem;
         }
 
-        li {
-            margin: 0.75rem;
+        #winner.visible {
+            display: flex;
+            animation: fadeInUp 0.6s ease both;
         }
 
-        .right-section {
-            margin-left: 1rem;
-            padding-left: 0.5rem;
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .right-section h3 {
-            padding-top: 0;
-            font-weight: 200;
+        .winner-congrats {
+            font-size: clamp(1.5rem, 3.5vw, 2.8rem);
+            font-weight: 700;
+            text-align: center;
         }
 
-        .right-section ul {
-            border-left: 0.3rem solid rgb(226, 0, 38);
-            list-style-type: none;
-            padding-left: 0;
+        #winner-name {
+            font-size: clamp(1.8rem, 4vw, 3.4rem);
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            overflow-wrap: break-word;
         }
 
+        #winner-name cite {
+            font-style: normal;
+            color: var(--text-secondary);
+            font-size: 0.7em;
+        }
+
+        #post {
+            width: 100%;
+            max-height: 55vh;
+            overflow-y: auto;
+            border-radius: 12px;
+        }
+
+        #post::-webkit-scrollbar        { width: 6px; }
+        #post::-webkit-scrollbar-track  { background: var(--dark-bg); }
+        #post::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 3px; }
+
+        /* ── Candidates / slot-machine panel ─────────────────────── */
+        #candidates {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 860px;
+            gap: 1.5rem;
+        }
+
+        #candidates.visible {
+            display: flex;
+            animation: fadeInUp 0.4s ease both;
+        }
+
+        .slot-machine {
+            width: 100%;
+            background: var(--card-bg);
+            border: 2px solid var(--red);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(226, 0, 26, 0.2);
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .slot-machine.locked {
+            border-color: var(--accent);
+            box-shadow: 0 0 60px rgba(88, 166, 255, 0.4);
+        }
+
+        #slot-name {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            min-height: 1.2em;
+            line-height: 1.2;
+            transition: opacity 0.06s;
+        }
+
+        #slot-handle {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .btn-next {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            background: transparent;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-next:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(88, 166, 255, 0.08);
+        }
+
+        /* ── Confetti canvas ─────────────────────────────────────── */
+        #confetti-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        /* ── Sidebar sections ────────────────────────────────────── */
+        .sidebar-section h3 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-section ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-section li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .sidebar-section li::before {
+            content: "›";
+            color: var(--red);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        cite {
+            font-style: normal;
+            color: var(--accent);
+        }
+
+        /* ── Form ────────────────────────────────────────────────── */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .form-group input[type="text"] {
+            background: var(--dark-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .form-group input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .form-check input[type="checkbox"] {
+            accent-color: var(--red);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .btn-raffle {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--red);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: filter 0.2s, transform 0.1s;
+            font-family: inherit;
+        }
+
+        .btn-raffle:hover  { filter: brightness(1.15); }
+        .btn-raffle:active { transform: scale(0.97); }
+        .btn-raffle:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Responsive tweaks ───────────────────────────────────── */
+        @media (max-width: 720px) {
+            .container { flex-direction: column; }
+            .sidebar   { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+            .banner    { padding: 0.75rem 1rem; }
+        }
     </style>
     <script type="text/javascript" src="raffle.js"></script>
 </head>
 <body>
 
-<div class="banner lead">
-    Concours Bluesky
+<!-- Header -->
+<div class="banner">
+    <div class="banner-title">Paris <span>JUG</span> &mdash; Concours Bluesky</div>
+    <img src="https://www.parisjug.org/img/logo.png" alt="Paris JUG logo" class="banner-logo"
+         onerror="this.style.display='none'">
 </div>
 
+<!-- Countdown overlay -->
+<div id="countdown-overlay">
+    <div class="countdown-label">Tirage au sort dans&hellip;</div>
+    <div id="countdown-number">3</div>
+</div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas"></canvas>
+
 <div class="container">
-    <div id="home" class="left-column">
-        <img src="https://www.parisjug.org/img/logo.png"
-             alt="Paris JUG logo" style="width: 100%; margin: 0 auto"/>
+
+    <!-- Main area -->
+    <div class="main-area">
+
+        <!-- Home panel -->
+        <div id="home">
+            <img src="https://www.parisjug.org/img/logo.png"
+                 alt="Paris JUG logo" class="home-logo"
+                 onerror="this.style.display='none'">
+            <p class="home-tagline">Pr&ecirc;t pour le tirage au sort&nbsp;?<br>Renseignez les speakers et cliquez sur <strong>Tirer</strong>.</p>
+        </div>
+
+        <!-- Candidates slot-machine panel -->
+        <div id="candidates">
+            <p class="winner-congrats">&#x1F3B0; Tirage en cours&hellip;</p>
+            <div class="slot-machine" id="slot-machine">
+                <div id="slot-name">&hellip;</div>
+                <div id="slot-handle"></div>
+            </div>
+        </div>
+
+        <!-- Winner panel -->
+        <div id="winner">
+            <p class="winner-congrats">&#x1F389; F&eacute;licitations au(à la) gagnant(e)&nbsp;!</p>
+            <h2 id="winner-name"></h2>
+            <div id="post"></div>
+            <button class="btn-next" onclick="nextWinner()">&#x23ED; Un(e) autre gagnant(e)</button>
+        </div>
+
     </div>
-    <div id="winner" class="left-column hidden">
-        <p class="lead">F&eacute;licitations aux gagnant(e)s ! &#x1F389;</p>
-        <h2 id="winner-name"></h2>
-        <div id="post"></div>
-        <p><a href="#" onclick="showNextWinner()">&#x23ED; Un(e) autre ?</a></p>
-    </div>
-    <div class="right-column">
-        <div class="right-section">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="sidebar-section">
             <h3>Pour gagner</h3>
-            <p>Un tweet avec :</p>
             <ul>
-                <li>Une photo de la soir&eacute;e,</li>
-                <li>La citation du <cite>parisjug</cite>,</li>
-                <li>La citation des speakers de la soir&eacute;e,</li>
-                <li>Qui n'est pas un RT.</li>
+                <li>Une photo de la soir&eacute;e</li>
+                <li>La citation du <cite>parisjug</cite></li>
+                <li>La citation des speakers de la soir&eacute;e</li>
+                <li>Qui n&rsquo;est pas un RT</li>
             </ul>
         </div>
-        <div class="right-section">
+
+        <div class="sidebar-section">
             <h3>Tirer au sort</h3>
             <form id="form">
-                <label for="speaker">Nom des speakers: </label>
-                <input id="speaker" name="speaker" type="text" required/>
-                <br/>
-                <label for="use-oembed" style="margin-top: 10px; display: inline-block;">
-                    <input id="use-oembed" name="use-oembed" type="checkbox" checked/>
-                    Utiliser l'affichage oEmbed officiel Bluesky
-                </label>
-                <br/>
-                <button type="submit" style="margin-top: 10px;">Tirer</button>
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                    <div class="form-group">
+                        <label for="speaker">Nom des speakers</label>
+                        <input id="speaker" name="speaker" type="text" required
+                               placeholder="ex: duke"/>
+                    </div>
+                    <label class="form-check">
+                        <input id="use-oembed" name="use-oembed" type="checkbox" checked/>
+                        Affichage oEmbed officiel Bluesky
+                    </label>
+                    <button type="submit" class="btn-raffle" id="btn-raffle">&#x1F3B2; Tirer</button>
+                </div>
             </form>
         </div>
-    </div>
+
+    </aside>
 </div>
+
 <script>
     const form = document.getElementById('form');
     form.addEventListener('submit', function (event) {

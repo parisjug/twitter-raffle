@@ -101,6 +101,26 @@ public class BlueskyRaffle {
         }
     }
 
+    @Path("/candidates")
+    @GET
+    @Produces(APPLICATION_JSON)
+    public Response getCandidates(@QueryParam("speaker") String speaker) {
+        try {
+            String query = getQuery(speaker);
+            Predicate<BlueskyPost> filter = getPostFilter(speaker);
+            Map<String, List<BlueskyPost>> userPosts = performQuery(query, filter);
+            // Each list has at least one post because performQuery only inserts posts that pass the filter
+            List<Winner> candidates = userPosts.values().stream()
+                    .map(list -> list.get(0))
+                    .map(Winner::fromBlueskyPost)
+                    .collect(Collectors.toList());
+            return Response.ok(candidates).build();
+        } catch (Exception exception) {
+            LOGGER.log(Level.SEVERE, "Failed to query candidates", exception);
+            return Response.status(SERVICE_UNAVAILABLE).build();
+        }
+    }
+
     @Path("/embed")
     @GET
     @Produces(APPLICATION_JSON)
@@ -152,18 +172,14 @@ public class BlueskyRaffle {
         Predicate<BlueskyPost> filter = getPostFilter(speaker);
         Map<String, List<BlueskyPost>> userPosts = performQuery(query, filter);
 
-        Random rand = new Random(System.currentTimeMillis());
-        List<String> users = new LinkedList<>(userPosts.keySet());
-        Set<String> winningUsers = new HashSet<>();
+        Random rand = new Random();
+        List<String> users = new ArrayList<>(userPosts.keySet());
+        Collections.shuffle(users, rand);
+        List<String> selectedUsers = users.subList(0, Math.min(WINNER_COUNT, users.size()));
 
-        while (winningUsers.size() < Math.min(WINNER_COUNT, userPosts.size())) {
-            String winner = users.remove(rand.nextInt(users.size()));
-            winningUsers.add(winner);
-        }
-
-        return winningUsers.stream()
+        return selectedUsers.stream()
                 .map(userPosts::get)
-                .map(list -> list.get(rand.nextInt(list.size()))) // Pick random post from user's posts
+                .map(list -> list.get(rand.nextInt(list.size())))
                 .map(Winner::fromBlueskyPost)
                 .collect(Collectors.toList());
     }
